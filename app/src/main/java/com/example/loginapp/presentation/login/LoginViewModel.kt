@@ -3,7 +3,7 @@ package com.example.loginapp.presentation.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.loginapp.common.Result
-import com.example.loginapp.data.local.entity.UserEntity
+import com.example.loginapp.domain.model.User
 import com.example.loginapp.domain.usecase.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +40,6 @@ class LoginViewModel @Inject constructor(private val loginUseCase: LoginUseCase)
 sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()
-    data class Success(val user: UserEntity) : LoginState()
+    data class Success(val user: User) : LoginState()
     data class Error(val message: String) : LoginState()
 }

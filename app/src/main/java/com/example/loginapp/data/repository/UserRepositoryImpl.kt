@@ -14,23 +14,27 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+import com.example.loginapp.data.mapper.toDomain
+import com.example.loginapp.data.mapper.toEntity
+import com.example.loginapp.domain.model.User
+
 class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : UserRepository {
 
-    override fun getUserByUsername(username: String): Flow<Result<UserEntity?>> = flow {
+    override fun getUserByUsername(username: String): Flow<Result<User?>> = flow {
         emit(Result.Loading)
         userDao.getUserByUsername(username)
-            .map { Result.Success(it) }
+            .map { entity -> Result.Success(entity?.toDomain()) }
             .collect { emit(it) }
     }.catch { e ->
         emit(Result.Error(e))
     }.flowOn(ioDispatcher)
 
-    override suspend fun insertUser(user: UserEntity): Result<Unit> = withContext(ioDispatcher) {
+    override suspend fun insertUser(user: User): Result<Unit> = withContext(ioDispatcher) {
         try {
-            userDao.insertUser(user)
+            userDao.insertUser(user.toEntity())
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error(e)
