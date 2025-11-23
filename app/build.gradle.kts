@@ -23,6 +23,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -70,4 +71,10 @@ dependencies {
 
     // MPAndroidChart
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    // Baseline Profiles
+    implementation("androidx.profileinstaller:profileinstaller:1.3.1")
+
+    // LeakCanary
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 }

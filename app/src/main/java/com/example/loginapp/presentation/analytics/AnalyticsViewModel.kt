@@ -13,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
-    private val getAnalyticsUseCase: GetAnalyticsUseCase
+    private val getAnalyticsUseCase: GetAnalyticsUseCase,
+    private val getTransactionsUseCase: com.example.loginapp.domain.usecase.GetTransactionsUseCase
 ) : ViewModel() {
 
     private val _highestIncome = MutableStateFlow<Double>(0.0)
@@ -24,6 +25,12 @@ class AnalyticsViewModel @Inject constructor(
 
     private val _mostFrequentItem = MutableStateFlow<String>("")
     val mostFrequentItem: StateFlow<String> = _mostFrequentItem.asStateFlow()
+
+    private val _expenseByCategory = MutableStateFlow<Map<String, Double>>(emptyMap())
+    val expenseByCategory: StateFlow<Map<String, Double>> = _expenseByCategory.asStateFlow()
+
+    private val _incomeVsExpense = MutableStateFlow<Pair<Double, Double>>(0.0 to 0.0)
+    val incomeVsExpense: StateFlow<Pair<Double, Double>> = _incomeVsExpense.asStateFlow()
 
     fun loadAnalytics(userId: Int, category: String = "PERSONAL") {
         viewModelScope.launch {
@@ -39,6 +46,28 @@ class AnalyticsViewModel @Inject constructor(
         viewModelScope.launch {
             getAnalyticsUseCase.getMostFrequentExpenseItem(userId, category).collect { result ->
                 if (result is Result.Success) _mostFrequentItem.value = result.data
+            }
+        }
+
+        // Process data for charts
+        viewModelScope.launch {
+            // Fetch all transactions for the user (using a large limit for now to get all)
+            // Ideally, we should have a repository method to get all transactions without limit
+            getTransactionsUseCase(userId, category, 1000).collect { result ->
+                if (result is Result.Success) {
+                    val transactions = result.data
+                    
+                    // Calculate Expense by Category
+                    val expenses = transactions.filter { it.type == "EXPENSE" }
+                    val expenseMap = expenses.groupBy { it.category }
+                        .mapValues { entry -> entry.value.sumOf { it.amount } }
+                    _expenseByCategory.value = expenseMap
+
+                    // Calculate Total Income vs Expense
+                    val totalIncome = transactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+                    val totalExpense = expenses.sumOf { it.amount }
+                    _incomeVsExpense.value = totalIncome to totalExpense
+                }
             }
         }
     }

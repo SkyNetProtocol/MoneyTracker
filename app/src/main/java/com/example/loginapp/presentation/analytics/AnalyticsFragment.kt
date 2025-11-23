@@ -47,21 +47,83 @@ class AnalyticsFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     viewModel.highestIncome.collect { amount ->
-                        binding.highestIncomeTextView.text = "Highest Income: PHP $amount"
+                        binding.highestIncomeTextView.text = "PHP ${String.format("%.2f", amount)}"
                     }
                 }
                 launch {
                     viewModel.highestExpense.collect { amount ->
-                        binding.highestExpenseTextView.text = "Highest Expense: PHP $amount"
+                        binding.highestExpenseTextView.text = "PHP ${String.format("%.2f", amount)}"
                     }
                 }
                 launch {
                     viewModel.mostFrequentItem.collect { item ->
-                        binding.mostFrequentItemTextView.text = "Most Frequent Item: ${item.ifEmpty { "None" }}"
+                        binding.mostFrequentItemTextView.text = item.ifEmpty { "None" }
+                    }
+                }
+                launch {
+                    viewModel.expenseByCategory.collect { expenseMap ->
+                        setupPieChart(expenseMap)
+                    }
+                }
+                launch {
+                    viewModel.incomeVsExpense.collect { (income, expense) ->
+                        setupBarChart(income, expense)
                     }
                 }
             }
         }
+    }
+
+    private fun setupPieChart(expenseMap: Map<String, Double>) {
+        val pieChart = binding.expensePieChart
+        
+        val entries = expenseMap.map { (category, amount) ->
+            com.github.mikephil.charting.data.PieEntry(amount.toFloat(), category)
+        }
+
+        val dataSet = com.github.mikephil.charting.data.PieDataSet(entries, "Expenses")
+        dataSet.colors = com.github.mikephil.charting.utils.ColorTemplate.MATERIAL_COLORS.toList()
+        dataSet.valueTextSize = 12f
+        dataSet.valueTextColor = android.graphics.Color.WHITE
+
+        val data = com.github.mikephil.charting.data.PieData(dataSet)
+        pieChart.data = data
+        pieChart.description.isEnabled = false
+        pieChart.centerText = "Expenses"
+        pieChart.setCenterTextSize(14f)
+        pieChart.animateY(1000)
+        pieChart.invalidate()
+    }
+
+    private fun setupBarChart(income: Double, expense: Double) {
+        val barChart = binding.incomeExpenseBarChart
+
+        val entries = listOf(
+            com.github.mikephil.charting.data.BarEntry(0f, income.toFloat()),
+            com.github.mikephil.charting.data.BarEntry(1f, expense.toFloat())
+        )
+
+        val dataSet = com.github.mikephil.charting.data.BarDataSet(entries, "Income vs Expense")
+        dataSet.colors = listOf(
+            android.graphics.Color.parseColor("#4CAF50"), // Green for Income
+            android.graphics.Color.parseColor("#F44336")  // Red for Expense
+        )
+        dataSet.valueTextSize = 12f
+
+        val data = com.github.mikephil.charting.data.BarData(dataSet)
+        barChart.data = data
+        barChart.description.isEnabled = false
+        
+        val xAxis = barChart.xAxis
+        xAxis.valueFormatter = com.github.mikephil.charting.formatter.IndexAxisValueFormatter(listOf("Income", "Expense"))
+        xAxis.position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
+        xAxis.setDrawGridLines(false)
+        xAxis.granularity = 1f
+
+        barChart.axisLeft.axisMinimum = 0f
+        barChart.axisRight.isEnabled = false
+        barChart.animateY(1000)
+        barChart.invalidate()
     }
 
     override fun onDestroyView() {

@@ -3,9 +3,11 @@ package com.example.loginapp.data.repository
 import com.example.loginapp.common.Result
 import com.example.loginapp.data.local.dao.MoneyTransactionDao
 import com.example.loginapp.data.local.dao.UserDao
-import com.example.loginapp.data.local.entity.MoneyTransactionEntity
+import com.example.loginapp.data.mapper.toDomain
+import com.example.loginapp.data.mapper.toEntity
 import com.example.loginapp.di.IoDispatcher
 import com.example.loginapp.domain.model.MoneyTransaction
+import com.example.loginapp.domain.model.User
 import com.example.loginapp.domain.repository.MoneyRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -24,42 +26,32 @@ class MoneyRepositoryImpl @Inject constructor(
     override fun getTransactionsForUser(userId: Int, category: String, limit: Int): Flow<Result<List<MoneyTransaction>>> =
         moneyTransactionDao.getTransactionsForUser(userId, category, limit)
             .map { entities ->
-                Result.Success(entities.map { entity ->
-                    MoneyTransaction(
-                        id = entity.id,
-                        userId = entity.userId,
-                        title = entity.title,
-                        amount = entity.amount,
-                        type = entity.type,
-                        category = entity.category,
-                        timestamp = entity.timestamp
-                    )
-                }) as Result<List<MoneyTransaction>>
+                Result.Success(entities.map { it.toDomain() }) as Result<List<MoneyTransaction>>
             }
             .catch { e -> emit(Result.Error(e)) }
             .flowOn(ioDispatcher)
 
-    override suspend fun insertTransaction(transaction: MoneyTransactionEntity): Result<Unit> = withContext(ioDispatcher) {
+    override suspend fun insertTransaction(transaction: MoneyTransaction): Result<Unit> = withContext(ioDispatcher) {
         try {
-            moneyTransactionDao.insertTransaction(transaction)
+            moneyTransactionDao.insertTransaction(transaction.toEntity())
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error(e)
         }
     }
 
-    override suspend fun updateTransaction(transaction: MoneyTransactionEntity): Result<Unit> = withContext(ioDispatcher) {
+    override suspend fun updateTransaction(transaction: MoneyTransaction): Result<Unit> = withContext(ioDispatcher) {
         try {
-            moneyTransactionDao.updateTransaction(transaction)
+            moneyTransactionDao.updateTransaction(transaction.toEntity())
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error(e)
         }
     }
 
-    override suspend fun deleteTransaction(transaction: MoneyTransactionEntity): Result<Unit> = withContext(ioDispatcher) {
+    override suspend fun deleteTransaction(transaction: MoneyTransaction): Result<Unit> = withContext(ioDispatcher) {
         try {
-            moneyTransactionDao.deleteTransaction(transaction)
+            moneyTransactionDao.deleteTransaction(transaction.toEntity())
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error(e)
@@ -114,9 +106,9 @@ class MoneyRepositoryImpl @Inject constructor(
             .catch { e -> emit(Result.Error(e)) }
             .flowOn(ioDispatcher)
 
-    override fun getUserById(userId: Int): Flow<Result<com.example.loginapp.data.local.entity.UserEntity?>> =
+    override fun getUserById(userId: Int): Flow<Result<User?>> =
         userDao.getUserById(userId)
-            .map { Result.Success(it) as Result<com.example.loginapp.data.local.entity.UserEntity?> }
+            .map { Result.Success(it?.toDomain()) as Result<User?> }
             .catch { e -> emit(Result.Error(e)) }
             .flowOn(ioDispatcher)
 }

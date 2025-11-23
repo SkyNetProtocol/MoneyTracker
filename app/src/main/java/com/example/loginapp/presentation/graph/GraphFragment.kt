@@ -74,7 +74,7 @@ class GraphFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.summary.collect { summary ->
                     summary?.let {
-                        binding.remainingTextView.text = "Remaining: $${it.remaining}"
+                        binding.remainingTextView.text = "PHP ${String.format("%.2f", it.remaining)}"
                         updateChart(it)
                     }
                 }
@@ -88,22 +88,26 @@ class GraphFragment : Fragment() {
         entries.add(BarEntry(1f, summary.totalExpense.toFloat()))
 
         val dataSet = BarDataSet(entries, "Income vs Expense")
-        dataSet.colors = listOf(Color.GREEN, Color.RED)
-        dataSet.valueTextColor = Color.BLACK
+        dataSet.colors = listOf(
+            android.graphics.Color.parseColor("#4CAF50"), // Green for Income
+            android.graphics.Color.parseColor("#F44336")  // Red for Expense
+        )
+        dataSet.valueTextColor = android.graphics.Color.BLACK
         dataSet.valueTextSize = 12f
 
         val barData = BarData(dataSet)
         binding.barChart.data = barData
         binding.barChart.description.isEnabled = false
-        binding.barChart.xAxis.valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                return when (value.toInt()) {
-                    0 -> "Income"
-                    1 -> "Expense"
-                    else -> ""
-                }
-            }
-        }
+        
+        val xAxis = binding.barChart.xAxis
+        xAxis.valueFormatter = com.github.mikephil.charting.formatter.IndexAxisValueFormatter(listOf("Income", "Expense"))
+        xAxis.position = XAxis.XAxisPosition.BOTTOM
+        xAxis.setDrawGridLines(false)
+        xAxis.granularity = 1f
+
+        binding.barChart.axisLeft.axisMinimum = 0f
+        binding.barChart.axisRight.isEnabled = false
+        binding.barChart.animateY(1000)
         binding.barChart.invalidate()
     }
 

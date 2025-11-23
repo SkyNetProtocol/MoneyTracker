@@ -3,7 +3,6 @@ package com.example.loginapp.presentation.moneytracker
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.loginapp.common.Result
-import com.example.loginapp.data.local.entity.MoneyTransactionEntity
 import com.example.loginapp.domain.model.MoneyTransaction
 import com.example.loginapp.domain.usecase.AddTransactionUseCase
 import com.example.loginapp.domain.usecase.DeleteTransactionUseCase
@@ -20,7 +19,8 @@ class MoneyTrackerViewModel @Inject constructor(
     private val getTransactionsUseCase: GetTransactionsUseCase,
     private val addTransactionUseCase: AddTransactionUseCase,
     private val updateTransactionUseCase: com.example.loginapp.domain.usecase.UpdateTransactionUseCase,
-    private val deleteTransactionUseCase: DeleteTransactionUseCase
+    private val deleteTransactionUseCase: DeleteTransactionUseCase,
+    @com.example.loginapp.di.DefaultDispatcher private val defaultDispatcher: kotlinx.coroutines.CoroutineDispatcher
 ) : ViewModel() {
 
     private val _transactions = MutableStateFlow<List<TransactionListItem>>(emptyList())
@@ -51,7 +51,7 @@ class MoneyTrackerViewModel @Inject constructor(
         loadTransactions(currentUserId, currentCategory)
     }
 
-    private fun groupTransactionsByDate(transactions: List<MoneyTransaction>): List<TransactionListItem> {
+    private suspend fun groupTransactionsByDate(transactions: List<MoneyTransaction>): List<TransactionListItem> = kotlinx.coroutines.withContext(defaultDispatcher) {
         val groupedList = mutableListOf<TransactionListItem>()
         var lastDate = ""
 
@@ -65,7 +65,7 @@ class MoneyTrackerViewModel @Inject constructor(
             }
             groupedList.add(TransactionListItem.TransactionItem(transaction))
         }
-        return groupedList
+        groupedList
     }
 
     fun addTransaction(title: String, amount: Double, type: String, categoryId: Int? = null) {
@@ -75,7 +75,7 @@ class MoneyTrackerViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _operationState.value = OperationState.Loading
-            val transaction = MoneyTransactionEntity(
+            val transaction = MoneyTransaction(
                 userId = currentUserId,
                 title = title,
                 amount = amount,
@@ -95,7 +95,7 @@ class MoneyTrackerViewModel @Inject constructor(
     fun deleteTransaction(transaction: MoneyTransaction) {
         viewModelScope.launch {
             _operationState.value = OperationState.Loading
-            val entity = MoneyTransactionEntity(
+            val entity = MoneyTransaction(
                 id = transaction.id,
                 userId = transaction.userId,
                 title = transaction.title,
@@ -116,7 +116,7 @@ class MoneyTrackerViewModel @Inject constructor(
     fun updateTransaction(transaction: MoneyTransaction) {
         viewModelScope.launch {
             _operationState.value = OperationState.Loading
-            val entity = MoneyTransactionEntity(
+            val entity = MoneyTransaction(
                 id = transaction.id,
                 userId = transaction.userId,
                 title = transaction.title,

@@ -146,7 +146,7 @@ class MoneyTrackerFragment : Fragment() {
         MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
             .setTitle("Add Transaction")
             .setView(dialogView)
-            .setPositiveButton("Add") { _, _ ->
+            .setPositiveButton("Add") { dialog, _ ->
                 val title = titleEditText.text.toString()
                 val amountStr = amountEditText.text.toString()
                 val type = when (typeRadioGroup.checkedRadioButtonId) {
@@ -169,6 +169,7 @@ class MoneyTrackerFragment : Fragment() {
                             categories[selectedPosition].id
                         } else null
                         
+                        dialog.dismiss() // Dismiss BEFORE operation
                         viewModel.addTransaction(title, amount, type, selectedCategoryId)
                     } else {
                         Toast.makeText(requireContext(), "Invalid amount", Toast.LENGTH_SHORT).show()
@@ -206,6 +207,7 @@ class MoneyTrackerFragment : Fragment() {
                 loadingDialog?.dismiss()
             }
             is OperationState.Loading -> {
+                loadingDialog?.dismiss() // Dismiss existing before creating new
                 loadingDialog = MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
                     .setMessage("Processing...")
                     .setCancelable(false)
@@ -310,7 +312,7 @@ class MoneyTrackerFragment : Fragment() {
         MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
             .setTitle("Edit Transaction")
             .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
+            .setPositiveButton("Save") { dialog, _ ->
                 val title = titleEditText.text.toString()
                 val amountStr = amountEditText.text.toString()
                 val type = when (typeRadioGroup.checkedRadioButtonId) {
@@ -330,6 +332,7 @@ class MoneyTrackerFragment : Fragment() {
                         type = type,
                         category = categoryName
                     )
+                    dialog.dismiss() // Dismiss BEFORE operation
                     viewModel.updateTransaction(updatedTransaction)
                 }
             }
