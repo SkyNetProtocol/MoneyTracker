@@ -3,6 +3,7 @@ package com.example.loginapp.presentation.moneytracker
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.google.android.material.button.MaterialButton
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -11,6 +12,7 @@ import com.example.loginapp.R
 import com.example.loginapp.domain.model.MoneyTransaction
 
 class MoneyTransactionAdapter(
+    private val onEditClick: (MoneyTransaction) -> Unit,
     private val onDeleteClick: (MoneyTransaction) -> Unit
 ) : ListAdapter<TransactionListItem, RecyclerView.ViewHolder>(TransactionDiffCallback()) {
 
@@ -45,7 +47,7 @@ class MoneyTransactionAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
             is TransactionListItem.DateHeader -> (holder as DateHeaderViewHolder).bind(item.date)
-            is TransactionListItem.TransactionItem -> (holder as TransactionViewHolder).bind(item.transaction, onDeleteClick)
+            is TransactionListItem.TransactionItem -> (holder as TransactionViewHolder).bind(item.transaction, onEditClick, onDeleteClick)
         }
     }
 
@@ -61,15 +63,24 @@ class MoneyTransactionAdapter(
         private val titleTextView: TextView = itemView.findViewById(R.id.titleTextView)
         private val amountTextView: TextView = itemView.findViewById(R.id.amountTextView)
         private val typeTextView: TextView = itemView.findViewById(R.id.typeTextView)
+        private val editButton: MaterialButton = itemView.findViewById(R.id.editButton)
+        private val deleteButton: MaterialButton = itemView.findViewById(R.id.deleteButton)
 
-        fun bind(transaction: MoneyTransaction, onDeleteClick: (MoneyTransaction) -> Unit) {
+        fun bind(
+            transaction: MoneyTransaction,
+            onEditClick: (MoneyTransaction) -> Unit,
+            onDeleteClick: (MoneyTransaction) -> Unit
+        ) {
             titleTextView.text = transaction.title
             amountTextView.text = "PHP ${transaction.amount}"
             typeTextView.text = transaction.type
 
-            itemView.setOnLongClickListener {
+            editButton.setOnClickListener {
+                onEditClick(transaction)
+            }
+
+            deleteButton.setOnClickListener {
                 onDeleteClick(transaction)
-                true
             }
         }
     }

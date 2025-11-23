@@ -1,30 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="176dp"
-    android:background="@color/primary"
-    android:gravity="bottom"
+    android:layout_height="200dp"
     android:orientation="vertical"
+    android:background="@color/primary"
     android:padding="16dp"
-    android:theme="@style/ThemeOverlay.AppCompat.Dark">
+    android:gravity="center"
+    android:layout_marginTop="25dp">
 
     <ImageView
+        android:id="@+id/avatarImageView"
         android:layout_width="72dp"
         android:layout_height="72dp"
-        android:contentDescription="App Logo"
-        android:src="@android:drawable/sym_def_app_icon" />
+        android:src="@android:drawable/sym_def_app_icon"
+        android:contentDescription="@string/app_name"
+        android:scaleType="centerCrop"
+        android:background="@drawable/circle_background" />
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/appNameTextView"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingTop="8dp"
         android:text="@string/app_name"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="12dp" />
 
     <TextView
         android:id="@+id/emailTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="user@example.com" />
-
+        android:text="user@example.com"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="4dp" />
 </LinearLayout>

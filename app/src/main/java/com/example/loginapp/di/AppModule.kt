@@ -115,6 +115,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideUpdateTransactionUseCase(moneyRepository: MoneyRepository): UpdateTransactionUseCase {
+        return UpdateTransactionUseCase(moneyRepository)
+    }
+
+    @Provides
+    @Singleton
     fun provideGetAnalyticsUseCase(moneyRepository: MoneyRepository): GetAnalyticsUseCase {
         return GetAnalyticsUseCase(moneyRepository)
     }

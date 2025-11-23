@@ -21,16 +21,19 @@ class DateSummaryFragment : Fragment() {
     private val viewModel: AccountSummaryViewModel by viewModels()
     private var userId: Int = -1
     private var date: String = ""
+    private var category: String = "PERSONAL"
 
     companion object {
         private const val ARG_USER_ID = "user_id"
         private const val ARG_DATE = "date"
+        private const val ARG_CATEGORY = "category"
 
-        fun newInstance(userId: Int, date: String): DateSummaryFragment {
+        fun newInstance(userId: Int, date: String, category: String = "PERSONAL"): DateSummaryFragment {
             val fragment = DateSummaryFragment()
             val args = Bundle()
             args.putInt(ARG_USER_ID, userId)
             args.putString(ARG_DATE, date)
+            args.putString(ARG_CATEGORY, category)
             fragment.arguments = args
             return fragment
         }
@@ -41,6 +44,7 @@ class DateSummaryFragment : Fragment() {
         arguments?.let {
             userId = it.getInt(ARG_USER_ID)
             date = it.getString(ARG_DATE) ?: ""
+            category = it.getString(ARG_CATEGORY) ?: "PERSONAL"
         }
     }
 
@@ -74,7 +78,6 @@ class DateSummaryFragment : Fragment() {
         }
 
         if (userId != -1 && date.isNotEmpty()) {
-            val category = arguments?.getString("CATEGORY", "PERSONAL") ?: "PERSONAL"
             viewModel.loadDateSummary(userId, category, date)
         }
 
@@ -83,21 +86,20 @@ class DateSummaryFragment : Fragment() {
         }
 
         binding.editButton.setOnClickListener {
-            // Navigate to HomeFragment (Money Tracker tab)
-            // We need to clear the back stack to avoid weird navigation states
-            parentFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            // Navigate to HomeFragment with the correct category
+            requireActivity().supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
             
+            val currentCategory = category
             val homeFragment = com.example.loginapp.presentation.home.HomeFragment().apply {
                 arguments = Bundle().apply {
                     putInt("USER_ID", userId)
+                    putString("CATEGORY", currentCategory)
                 }
             }
             
-            parentFragmentManager.beginTransaction()
+            requireActivity().supportFragmentManager.beginTransaction()
                 .replace(com.example.loginapp.R.id.fragment_container_view, homeFragment)
                 .commit()
-            
-            // Note: HomeFragment defaults to the first tab (Money Tracker), which is what we want.
         }
     }
 

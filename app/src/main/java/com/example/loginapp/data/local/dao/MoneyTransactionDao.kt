@@ -16,6 +16,9 @@ interface MoneyTransactionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: MoneyTransactionEntity)
 
+    @androidx.room.Update
+    suspend fun updateTransaction(transaction: MoneyTransactionEntity)
+
     @Delete
     suspend fun deleteTransaction(transaction: MoneyTransactionEntity)
 

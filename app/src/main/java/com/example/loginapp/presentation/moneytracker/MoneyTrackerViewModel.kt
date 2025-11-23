@@ -19,6 +19,7 @@ import javax.inject.Inject
 class MoneyTrackerViewModel @Inject constructor(
     private val getTransactionsUseCase: GetTransactionsUseCase,
     private val addTransactionUseCase: AddTransactionUseCase,
+    private val updateTransactionUseCase: com.example.loginapp.domain.usecase.UpdateTransactionUseCase,
     private val deleteTransactionUseCase: DeleteTransactionUseCase
 ) : ViewModel() {
 
@@ -107,6 +108,27 @@ class MoneyTrackerViewModel @Inject constructor(
             _operationState.value = when (result) {
                 is Result.Success -> OperationState.Success("Transaction deleted successfully")
                 is Result.Error -> OperationState.Error(result.exception.message ?: "Failed to delete transaction")
+                is Result.Loading -> OperationState.Loading
+            }
+        }
+    }
+
+    fun updateTransaction(transaction: MoneyTransaction) {
+        viewModelScope.launch {
+            _operationState.value = OperationState.Loading
+            val entity = MoneyTransactionEntity(
+                id = transaction.id,
+                userId = transaction.userId,
+                title = transaction.title,
+                amount = transaction.amount,
+                type = transaction.type,
+                category = transaction.category,
+                timestamp = transaction.timestamp
+            )
+            val result = updateTransactionUseCase(entity)
+            _operationState.value = when (result) {
+                is Result.Success -> OperationState.Success("Transaction updated successfully")
+                is Result.Error -> OperationState.Error(result.exception.message ?: "Failed to update transaction")
                 is Result.Loading -> OperationState.Loading
             }
         }

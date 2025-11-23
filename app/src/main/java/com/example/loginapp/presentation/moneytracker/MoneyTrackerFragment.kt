@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.Toast
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -17,6 +18,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.loginapp.R
 import com.example.loginapp.databinding.FragmentMoneyTrackerBinding
+import com.example.loginapp.domain.model.MoneyTransaction
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -58,9 +60,14 @@ class MoneyTrackerFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = MoneyTransactionAdapter { transaction ->
-            viewModel.deleteTransaction(transaction)
-        }
+        adapter = MoneyTransactionAdapter(
+            onEditClick = { transaction ->
+                showEditTransactionDialog(transaction)
+            },
+            onDeleteClick = { transaction ->
+                showDeleteConfirmationDialog(transaction)
+            }
+        )
         binding.transactionsRecyclerView.adapter = adapter
         val layoutManager = LinearLayoutManager(requireContext())
         binding.transactionsRecyclerView.layoutManager = layoutManager
@@ -228,6 +235,106 @@ class MoneyTrackerFragment : Fragment() {
                     .show()
             }
         }
+    }
+
+    private fun showDeleteConfirmationDialog(transaction: MoneyTransaction) {
+        MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
+            .setTitle("Delete Transaction")
+            .setMessage("Are you sure you want to delete this transaction?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteTransaction(transaction)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showEditTransactionDialog(transaction: MoneyTransaction) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_add_transaction, null)
+        val titleEditText = dialogView.findViewById<EditText>(R.id.titleEditText)
+        val amountEditText = dialogView.findViewById<EditText>(R.id.amountEditText)
+        val typeRadioGroup = dialogView.findViewById<RadioGroup>(R.id.typeRadioGroup)
+        val categorySpinner = dialogView.findViewById<Spinner>(R.id.categorySpinner)
+
+        // Pre-fill with existing data
+        titleEditText.setText(transaction.title)
+        amountEditText.setText(transaction.amount.toString())
+        
+        when (transaction.type) {
+            "INCOME" -> typeRadioGroup.check(R.id.incomeRadioButton)
+            "EXPENSE" -> typeRadioGroup.check(R.id.expenseRadioButton)
+        }
+
+        val categoryAdapter = ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item)
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        categorySpinner.adapter = categoryAdapter
+
+        // Load categories for the current type
+        categoryViewModel.loadCategoriesByType(transaction.type)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val categories = if (transaction.type == "INCOME") {
+                categoryViewModel.incomeCategories.value
+            } else {
+                categoryViewModel.expenseCategories.value
+            }
+            categoryAdapter.clear()
+            categoryAdapter.addAll(categories.map { "${it.icon} ${it.name}" })
+            categoryAdapter.notifyDataSetChanged()
+            
+            // Set current category
+            val currentCategoryIndex = categories.indexOfFirst { it.name == transaction.category }
+            if (currentCategoryIndex >= 0) {
+                categorySpinner.setSelection(currentCategoryIndex)
+            }
+        }
+
+        typeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            val type = when (checkedId) {
+                R.id.incomeRadioButton -> "INCOME"
+                R.id.expenseRadioButton -> "EXPENSE"
+                else -> "EXPENSE"
+            }
+            categoryViewModel.loadCategoriesByType(type)
+            
+            viewLifecycleOwner.lifecycleScope.launch {
+                val categories = if (type == "INCOME") {
+                    categoryViewModel.incomeCategories.value
+                } else {
+                    categoryViewModel.expenseCategories.value
+                }
+                categoryAdapter.clear()
+                categoryAdapter.addAll(categories.map { "${it.icon} ${it.name}" })
+                categoryAdapter.notifyDataSetChanged()
+            }
+        }
+
+        MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
+            .setTitle("Edit Transaction")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val title = titleEditText.text.toString()
+                val amountStr = amountEditText.text.toString()
+                val type = when (typeRadioGroup.checkedRadioButtonId) {
+                    R.id.incomeRadioButton -> "INCOME"
+                    R.id.expenseRadioButton -> "EXPENSE"
+                    else -> transaction.type
+                }
+
+                val selectedCategoryText = categorySpinner.selectedItem?.toString() ?: ""
+                val categoryName = selectedCategoryText.substringAfter(" ").trim()
+
+                if (title.isNotEmpty() && amountStr.isNotEmpty()) {
+                    val amount = amountStr.toDoubleOrNull() ?: 0.0
+                    val updatedTransaction = transaction.copy(
+                        title = title,
+                        amount = amount,
+                        type = type,
+                        category = categoryName
+                    )
+                    viewModel.updateTransaction(updatedTransaction)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onDestroyView() {

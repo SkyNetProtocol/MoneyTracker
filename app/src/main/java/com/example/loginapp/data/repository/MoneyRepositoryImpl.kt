@@ -48,6 +48,15 @@ class MoneyRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateTransaction(transaction: MoneyTransactionEntity): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            moneyTransactionDao.updateTransaction(transaction)
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
     override suspend fun deleteTransaction(transaction: MoneyTransactionEntity): Result<Unit> = withContext(ioDispatcher) {
         try {
             moneyTransactionDao.deleteTransaction(transaction)

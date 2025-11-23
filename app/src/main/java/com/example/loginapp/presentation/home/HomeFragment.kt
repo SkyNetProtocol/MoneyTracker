@@ -33,6 +33,9 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Get category from arguments if provided
+        currentCategory = arguments?.getString("CATEGORY") ?: "PERSONAL"
+
         pagerAdapter = HomePagerAdapter(this)
         binding.viewPager.adapter = pagerAdapter
 
@@ -44,6 +47,12 @@ class HomeFragment : Fragment() {
                 else -> "Tab ${position + 1}"
             }
         }.attach()
+
+        // Set bottom navigation to match the category
+        binding.bottomNavigation.selectedItemId = when (currentCategory) {
+            "COMPANY" -> R.id.nav_company
+            else -> R.id.nav_personal
+        }
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {

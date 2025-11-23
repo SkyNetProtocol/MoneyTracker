@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface MoneyRepository {
     fun getTransactionsForUser(userId: Int, category: String, limit: Int): Flow<Result<List<MoneyTransaction>>>
     suspend fun insertTransaction(transaction: MoneyTransactionEntity): Result<Unit>
+    suspend fun updateTransaction(transaction: MoneyTransactionEntity): Result<Unit>
     suspend fun deleteTransaction(transaction: MoneyTransactionEntity): Result<Unit>
     fun getTotalIncome(userId: Int, category: String): Flow<Result<Double>>
     fun getTotalExpense(userId: Int, category: String): Flow<Result<Double>>
