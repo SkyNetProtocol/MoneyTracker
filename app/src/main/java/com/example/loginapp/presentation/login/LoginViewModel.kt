@@ -37,9 +37,4 @@ class LoginViewModel @Inject constructor(private val loginUseCase: LoginUseCase)
     }
 }
 
-sealed class LoginState {
-    object Idle : LoginState()
-    object Loading : LoginState()
-    data class Success(val user: User) : LoginState()
-    data class Error(val message: String) : LoginState()
-}
+

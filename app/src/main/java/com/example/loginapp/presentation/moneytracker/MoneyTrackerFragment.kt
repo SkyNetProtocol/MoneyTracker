@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -136,7 +136,7 @@ class MoneyTrackerFragment : Fragment() {
             }
         }
 
-        AlertDialog.Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
             .setTitle("Add Transaction")
             .setView(dialogView)
             .setPositiveButton("Add") { _, _ ->
@@ -191,7 +191,7 @@ class MoneyTrackerFragment : Fragment() {
         }
     }
 
-    private var loadingDialog: AlertDialog? = null
+    private var loadingDialog: androidx.appcompat.app.AlertDialog? = null
 
     private fun handleOperationState(state: OperationState) {
         when (state) {
@@ -199,7 +199,7 @@ class MoneyTrackerFragment : Fragment() {
                 loadingDialog?.dismiss()
             }
             is OperationState.Loading -> {
-                loadingDialog = AlertDialog.Builder(requireContext())
+                loadingDialog = MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
                     .setMessage("Processing...")
                     .setCancelable(false)
                     .create()
@@ -207,7 +207,7 @@ class MoneyTrackerFragment : Fragment() {
             }
             is OperationState.Success -> {
                 loadingDialog?.dismiss()
-                AlertDialog.Builder(requireContext())
+                MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
                     .setTitle("Success")
                     .setMessage(state.message)
                     .setPositiveButton("OK") { dialog, _ ->
@@ -218,7 +218,7 @@ class MoneyTrackerFragment : Fragment() {
             }
             is OperationState.Error -> {
                 loadingDialog?.dismiss()
-                AlertDialog.Builder(requireContext())
+                MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
                     .setTitle("Error")
                     .setMessage(state.message)
                     .setPositiveButton("OK") { dialog, _ ->

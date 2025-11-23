@@ -8,11 +8,19 @@ import androidx.fragment.app.Fragment
 import com.example.loginapp.databinding.FragmentProfileBinding
 import dagger.hilt.android.AndroidEntryPoint
 
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
+
 @AndroidEntryPoint
 class ProfileFragment : Fragment() {
 
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
+
+    private val viewModel: ProfileViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -26,14 +34,31 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val username = arguments?.getString("USERNAME") ?: "User"
-        val email = arguments?.getString("EMAIL") ?: "user@example.com"
+        val userId = arguments?.getInt("USER_ID", -1) ?: -1
+        if (userId != -1) {
+            viewModel.loadUser(userId)
+        }
 
-        binding.usernameTextView.text = username
-        binding.emailTextView.text = email
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.user.collect { user ->
+                    if (user != null) {
+                        binding.usernameTextView.text = user.username
+                        binding.emailTextView.text = user.email
+                    }
+                }
+            }
+        }
 
         binding.logoutButton.setOnClickListener {
-            (activity as? com.example.loginapp.MainActivity)?.logout()
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(), com.example.loginapp.R.style.CustomDialog)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to log out?")
+                .setPositiveButton("Yes") { _, _ ->
+                    (activity as? com.example.loginapp.MainActivity)?.logout()
+                }
+                .setNegativeButton("No", null)
+                .show()
         }
     }
 

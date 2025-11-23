@@ -73,6 +73,10 @@ class CategoryRepositoryImpl @Inject constructor(
 
     override suspend fun seedDefaultCategories(): Result<Unit> = withContext(ioDispatcher) {
         try {
+            if (categoryDao.getCategoryCount() > 0) {
+                return@withContext Result.Success(Unit)
+            }
+
             val defaultCategories = listOf(
                 // Expense Categories
                 CategoryEntity(name = "Food", icon = "🍔", color = "#FF5722", type = "EXPENSE", isDefault = true),

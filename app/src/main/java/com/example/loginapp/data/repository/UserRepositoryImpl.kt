@@ -32,6 +32,15 @@ class UserRepositoryImpl @Inject constructor(
         emit(Result.Error(e))
     }.flowOn(ioDispatcher)
 
+    override fun getUserById(userId: Int): Flow<Result<User?>> = flow {
+        emit(Result.Loading)
+        userDao.getUserById(userId)
+            .map { entity -> Result.Success(entity?.toDomain()) }
+            .collect { emit(it) }
+    }.catch { e ->
+        emit(Result.Error(e))
+    }.flowOn(ioDispatcher)
+
     override suspend fun insertUser(user: User): Result<Unit> = withContext(ioDispatcher) {
         try {
             userDao.insertUser(user.toEntity())

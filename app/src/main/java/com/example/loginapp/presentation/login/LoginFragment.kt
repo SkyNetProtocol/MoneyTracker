@@ -34,6 +34,9 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Ensure drawer is locked on Login screen
+        (requireActivity() as com.example.loginapp.MainActivity).setDrawerEnabled(false)
+
         binding.loginButton.setOnClickListener {
             val username = binding.usernameEditText.text.toString()
             val password = binding.passwordEditText.text.toString()
@@ -61,7 +64,8 @@ class LoginFragment : Fragment() {
                             binding.progressBar.visibility = View.GONE
                             Toast.makeText(requireContext(), "Login Successful", Toast.LENGTH_SHORT).show()
                             
-                            (requireActivity() as com.example.loginapp.MainActivity).currentUserId = state.user.id
+                            (requireActivity() as com.example.loginapp.MainActivity).setCurrentUser(state.user.id)
+                            (requireActivity() as com.example.loginapp.MainActivity).setDrawerEnabled(true)
 
                             val homeFragment = com.example.loginapp.presentation.home.HomeFragment().apply {
                                 arguments = Bundle().apply {

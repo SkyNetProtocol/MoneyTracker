@@ -7,6 +7,7 @@ fun UserEntity.toDomain(): User {
     return User(
         id = id,
         username = username,
+        email = email,
         passwordHash = passwordHash
     )
 }
@@ -15,6 +16,7 @@ fun User.toEntity(): UserEntity {
     return UserEntity(
         id = id,
         username = username,
+        email = email,
         passwordHash = passwordHash
     )
 }

@@ -6,17 +6,22 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import com.example.loginapp.presentation.home.HomeFragment
 import com.example.loginapp.presentation.login.LoginFragment
 import com.example.loginapp.presentation.profile.ProfileFragment
 import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var drawerLayout: DrawerLayout
     var currentUserId: Int = -1
+
+    @javax.inject.Inject
+    lateinit var getUserUseCase: com.example.loginapp.domain.usecase.GetUserUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,41 +41,42 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Hide drawer/toolbar on login screen logic would go here if needed,
-        // but for now we just handle navigation.
-        // Ideally, we should listen to backstack changes to show/hide the drawer toggle.
+        setDrawerEnabled(false)
+    }
+
+    fun setCurrentUser(userId: Int) {
+        currentUserId = userId
+        updateDrawerHeader(userId)
+    }
+
+    private fun updateDrawerHeader(userId: Int) {
+        val navView: NavigationView = findViewById(R.id.nav_view)
+        val headerView = navView.getHeaderView(0)
+        val emailTextView: android.widget.TextView = headerView.findViewById(R.id.emailTextView)
+
+        lifecycleScope.launch {
+            getUserUseCase(userId).collect { result ->
+                if (result is com.example.loginapp.common.Result.Success && result.data != null) {
+                    emailTextView.text = result.data.email
+                }
+            }
+        }
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_home -> {
-                // Navigate to Home
-                // Assuming user ID is stored or accessible. For now, we might just pop back if Home is below.
-                // Or replace with HomeFragment if we are on Profile.
-                // Ideally, we should use a shared ViewModel or proper Navigation Component.
-                // For this manual implementation:
                 supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                // Note: This might pop Login too if not careful.
-                // A better approach for manual nav without NavComponent:
-                // Check if HomeFragment is already in stack or replace.
-                // Since LoginFragment replaces itself with HomeFragment, Home is at root of "logged in" state.
-                // So popping back stack might be enough if we added Profile on top.
                 
-                // Let's just replace for simplicity in this manual setup, assuming we have a user ID.
-                // But we don't have user ID easily here without a shared ViewModel.
-                // So let's assume HomeFragment is the "base" after login.
-                if (supportFragmentManager.findFragmentByTag("HOME") == null) {
-                     // If Home is not found (e.g. we are on Profile and Home was replaced), we need to recreate it.
-                     // But we need userId.
-                     // Let's rely on the fact that we will just hide/show or replace.
+                val homeFragment = com.example.loginapp.presentation.home.HomeFragment().apply {
+                    arguments = Bundle().apply {
+                        putInt("USER_ID", currentUserId)
+                    }
                 }
                 
-                // Simplest manual nav for this context:
-                // If we are on Profile, just pop it to go back to Home.
-                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view)
-                if (currentFragment is ProfileFragment) {
-                    supportFragmentManager.popBackStack()
-                }
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container_view, homeFragment)
+                    .commit()
             }
             R.id.nav_account_summary -> {
                 supportFragmentManager.beginTransaction()
@@ -80,14 +86,26 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.nav_profile -> {
                 val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view)
                 if (currentFragment !is ProfileFragment) {
+                    val profileFragment = ProfileFragment().apply {
+                        arguments = Bundle().apply {
+                            putInt("USER_ID", currentUserId)
+                        }
+                    }
                     supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container_view, ProfileFragment())
+                        .replace(R.id.fragment_container_view, profileFragment)
                         .addToBackStack(null)
                         .commit()
                 }
             }
             R.id.nav_logout -> {
-                logout()
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.CustomDialog)
+                    .setTitle("Logout")
+                    .setMessage("Are you sure you want to log out?")
+                    .setPositiveButton("Yes") { _, _ ->
+                        logout()
+                    }
+                    .setNegativeButton("No", null)
+                    .show()
             }
         }
         drawerLayout.closeDrawer(GravityCompat.START)
@@ -103,10 +121,22 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     fun logout() {
-        // Clear back stack and go to LoginFragment
         supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container_view, LoginFragment())
             .commit()
+        setDrawerEnabled(false)
+        currentUserId = -1
+    }
+
+    fun setDrawerEnabled(enabled: Boolean) {
+        val lockMode = if (enabled) DrawerLayout.LOCK_MODE_UNLOCKED else DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+        drawerLayout.setDrawerLockMode(lockMode)
+        val toggle = ActionBarDrawerToggle(
+            this, drawerLayout, findViewById(R.id.toolbar),
+            R.string.navigation_drawer_open, R.string.navigation_drawer_close
+        )
+        toggle.isDrawerIndicatorEnabled = enabled
+        toggle.syncState()
     }
 }

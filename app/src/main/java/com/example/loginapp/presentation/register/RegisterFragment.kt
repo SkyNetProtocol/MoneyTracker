@@ -36,9 +36,10 @@ class RegisterFragment : Fragment() {
 
         binding.registerButton.setOnClickListener {
             val username = binding.usernameEditText.text.toString()
+            val email = binding.emailEditText.text.toString()
             val password = binding.passwordEditText.text.toString()
-            if (username.isNotBlank() && password.isNotBlank()) {
-                viewModel.register(username, password)
+            if (username.isNotBlank() && email.isNotBlank() && password.isNotBlank()) {
+                viewModel.register(username, email, password)
             } else {
                 Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
             }
