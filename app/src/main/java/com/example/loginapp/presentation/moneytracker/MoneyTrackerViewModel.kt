@@ -7,6 +7,7 @@ import com.example.loginapp.domain.model.MoneyTransaction
 import com.example.loginapp.domain.usecase.AddTransactionUseCase
 import com.example.loginapp.domain.usecase.DeleteTransactionUseCase
 import com.example.loginapp.domain.usecase.GetTransactionsUseCase
+import com.example.loginapp.domain.usecase.GetTransactionsByDateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MoneyTrackerViewModel @Inject constructor(
     private val getTransactionsUseCase: GetTransactionsUseCase,
+    private val getTransactionsByDateUseCase: GetTransactionsByDateUseCase,
     private val addTransactionUseCase: AddTransactionUseCase,
     private val updateTransactionUseCase: com.example.loginapp.domain.usecase.UpdateTransactionUseCase,
     private val deleteTransactionUseCase: DeleteTransactionUseCase,
@@ -32,18 +34,38 @@ class MoneyTrackerViewModel @Inject constructor(
     private var currentUserId: Int = -1
     private var currentCategory: String = "PERSONAL"
     private var currentLimit = 20
+    private var selectedDate: Long? = null // null means show all transactions
 
     fun loadTransactions(userId: Int, category: String = "PERSONAL") {
         currentUserId = userId
         currentCategory = category
         viewModelScope.launch {
-            getTransactionsUseCase(userId, category, currentLimit).collect { result ->
-                if (result is Result.Success) {
-                    _transactions.value = groupTransactionsByDate(result.data)
+            if (selectedDate != null) {
+                // Load transactions for specific date
+                getTransactionsByDateUseCase(userId, category, selectedDate!!).collect { result ->
+                    if (result is Result.Success) {
+                        _transactions.value = groupTransactionsByDate(result.data)
+                    }
+                }
+            } else {
+                // Load all transactions
+                getTransactionsUseCase(userId, category, currentLimit).collect { result ->
+                    if (result is Result.Success) {
+                        _transactions.value = groupTransactionsByDate(result.data)
+                    }
                 }
             }
         }
     }
+
+    fun setDateFilter(date: Long?) {
+        selectedDate = date
+        if (currentUserId != -1) {
+            loadTransactions(currentUserId, currentCategory)
+        }
+    }
+
+    fun getSelectedDate(): Long? = selectedDate
 
     fun loadMore() {
         if (currentUserId == -1) return
@@ -81,7 +103,8 @@ class MoneyTrackerViewModel @Inject constructor(
                 amount = amount,
                 type = type,
                 category = currentCategory,
-                categoryId = categoryId
+                categoryId = categoryId,
+                timestamp = selectedDate ?: System.currentTimeMillis() // Use selected date if available
             )
             val result = addTransactionUseCase(transaction)
             _operationState.value = when (result) {

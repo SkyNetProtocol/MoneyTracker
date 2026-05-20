@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.loginapp.databinding.FragmentSplashBinding
-import com.example.loginapp.presentation.login.LoginFragment
+import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -47,9 +47,9 @@ class SplashFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             delay(2000) // Wait for 2 seconds
             if (isAdded) {
-                parentFragmentManager.beginTransaction()
-                    .replace(com.example.loginapp.R.id.fragment_container_view, LoginFragment())
-                    .commit()
+                findNavController().navigate(
+                    SplashFragmentDirections.actionSplashFragmentToLoginFragment()
+                )
             }
         }
     }

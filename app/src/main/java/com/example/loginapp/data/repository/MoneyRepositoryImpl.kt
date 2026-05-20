@@ -111,4 +111,27 @@ class MoneyRepositoryImpl @Inject constructor(
             .map { Result.Success(it?.toDomain()) as Result<User?> }
             .catch { e -> emit(Result.Error(e)) }
             .flowOn(ioDispatcher)
+
+    override fun getTransactionsByDate(userId: Int, category: String, date: Long): Flow<Result<List<MoneyTransaction>>> {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.timeInMillis = date
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val startOfDay = calendar.timeInMillis
+
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 23)
+        calendar.set(java.util.Calendar.MINUTE, 59)
+        calendar.set(java.util.Calendar.SECOND, 59)
+        calendar.set(java.util.Calendar.MILLISECOND, 999)
+        val endOfDay = calendar.timeInMillis
+
+        return moneyTransactionDao.getTransactionsByDateRange(userId, category, startOfDay, endOfDay)
+            .map { entities ->
+                Result.Success(entities.map { it.toDomain() }) as Result<List<MoneyTransaction>>
+            }
+            .catch { e -> emit(Result.Error(e)) }
+            .flowOn(ioDispatcher)
+    }
 }

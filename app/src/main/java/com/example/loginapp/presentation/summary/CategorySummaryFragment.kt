@@ -79,7 +79,7 @@ class CategorySummaryFragment : Fragment() {
     private fun navigateToDateSummary(date: String) {
         val fragment = DateSummaryFragment.newInstance(userId, date, category)
         requireActivity().supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container_view, fragment)
+            .replace(R.id.nav_host_fragment, fragment)
             .addToBackStack(null)
             .commit()
     }

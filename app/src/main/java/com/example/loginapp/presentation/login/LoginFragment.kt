@@ -1,5 +1,7 @@
 package com.example.loginapp.presentation.login
 
+import androidx.navigation.fragment.findNavController
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -34,8 +36,7 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Ensure drawer is locked on Login screen
-        (requireActivity() as com.example.loginapp.MainActivity).setDrawerEnabled(false)
+
 
         binding.loginButton.setOnClickListener {
             val username = binding.usernameEditText.text.toString()
@@ -44,10 +45,9 @@ class LoginFragment : Fragment() {
         }
 
         binding.registerTextView.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(com.example.loginapp.R.id.fragment_container_view, com.example.loginapp.presentation.register.RegisterFragment())
-                .addToBackStack(null)
-                .commit()
+            findNavController().navigate(
+                LoginFragmentDirections.actionLoginFragmentToRegisterFragment()
+            )
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -65,17 +65,12 @@ class LoginFragment : Fragment() {
                             Toast.makeText(requireContext(), "Login Successful", Toast.LENGTH_SHORT).show()
                             
                             (requireActivity() as com.example.loginapp.MainActivity).setCurrentUser(state.user.id)
-                            (requireActivity() as com.example.loginapp.MainActivity).setDrawerEnabled(true)
-
-                            val homeFragment = com.example.loginapp.presentation.home.HomeFragment().apply {
-                                arguments = Bundle().apply {
-                                    putInt("USER_ID", state.user.id)
-                                }
-                            }
                             
-                            parentFragmentManager.beginTransaction()
-                                .replace(com.example.loginapp.R.id.fragment_container_view, homeFragment)
-                                .commit()
+                            val action = LoginFragmentDirections.actionLoginFragmentToHomeFragment(
+                                userId = state.user.id,
+                                category = "PERSONAL"
+                            )
+                            findNavController().navigate(action)
                         }
                         is LoginState.Error -> {
                             binding.progressBar.visibility = View.GONE

@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.example.loginapp.data.local.entity.MoneyTransactionEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -16,7 +17,7 @@ interface MoneyTransactionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: MoneyTransactionEntity)
 
-    @androidx.room.Update
+    @Update
     suspend fun updateTransaction(transaction: MoneyTransactionEntity)
 
     @Delete
@@ -45,6 +46,9 @@ interface MoneyTransactionDao {
 
     @Query("SELECT SUM(amount) FROM money_transactions WHERE userId = :userId AND category = :category AND type = 'EXPENSE' AND date(timestamp/1000, 'unixepoch') = :date")
     fun getExpenseForDate(userId: Int, category: String, date: String): Flow<Double?>
+
+    @Query("SELECT * FROM money_transactions WHERE userId = :userId AND category = :category AND timestamp >= :startOfDay AND timestamp < :endOfDay ORDER BY timestamp DESC")
+    fun getTransactionsByDateRange(userId: Int, category: String, startOfDay: Long, endOfDay: Long): Flow<List<MoneyTransactionEntity>>
 }
 
 data class ItemCount(val title: String, val count: Int)

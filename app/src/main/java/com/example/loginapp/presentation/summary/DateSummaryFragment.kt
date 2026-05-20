@@ -98,7 +98,7 @@ class DateSummaryFragment : Fragment() {
             }
             
             requireActivity().supportFragmentManager.beginTransaction()
-                .replace(com.example.loginapp.R.id.fragment_container_view, homeFragment)
+                .replace(com.example.loginapp.R.id.nav_host_fragment, homeFragment)
                 .commit()
         }
     }

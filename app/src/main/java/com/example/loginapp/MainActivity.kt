@@ -7,9 +7,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
-import com.example.loginapp.presentation.home.HomeFragment
-import com.example.loginapp.presentation.login.LoginFragment
-import com.example.loginapp.presentation.profile.ProfileFragment
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.navigateUp
+import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -18,6 +21,8 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navController: NavController
+    private lateinit var appBarConfiguration: AppBarConfiguration
     var currentUserId: Int = -1
 
     @javax.inject.Inject
@@ -32,16 +37,34 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         drawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
+        
+        // Setup NavController
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
+
+        // Setup AppBarConfiguration for top-level destinations
+        appBarConfiguration = AppBarConfiguration(
+            setOf(R.id.homeFragment, R.id.profileFragment, R.id.accountSummaryFragment),
+            drawerLayout
+        )
+
+        setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setNavigationItemSelectedListener(this)
 
-        val toggle = ActionBarDrawerToggle(
-            this, drawerLayout, toolbar,
-            R.string.navigation_drawer_open, R.string.navigation_drawer_close
-        )
-        drawerLayout.addDrawerListener(toggle)
-        toggle.syncState()
-
-        setDrawerEnabled(false)
+        // Listen for destination changes to control drawer and toolbar visibility
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+                R.id.loginFragment, R.id.registerFragment, R.id.splashFragment -> {
+                    supportActionBar?.hide()
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
+                else -> {
+                    supportActionBar?.show()
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+                }
+            }
+        }
     }
 
     fun setCurrentUser(userId: Int) {
@@ -66,36 +89,26 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_home -> {
-                supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                
-                val homeFragment = com.example.loginapp.presentation.home.HomeFragment().apply {
-                    arguments = Bundle().apply {
-                        putInt("USER_ID", currentUserId)
-                    }
+                // Navigate to home using global action
+                val bundle = Bundle().apply {
+                    putInt("userId", currentUserId)
+                    putString("category", "PERSONAL")
                 }
-                
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container_view, homeFragment)
-                    .commit()
+                navController.navigate(R.id.action_global_homeFragment, bundle)
             }
             R.id.nav_account_summary -> {
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container_view, com.example.loginapp.presentation.summary.AccountSummaryFragment.newInstance(currentUserId))
-                    .commit()
+                // Navigate using global action with arguments
+                val bundle = Bundle().apply {
+                    putInt("userId", currentUserId)
+                }
+                navController.navigate(R.id.action_global_accountSummaryFragment, bundle)
             }
             R.id.nav_profile -> {
-                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view)
-                if (currentFragment !is ProfileFragment) {
-                    val profileFragment = ProfileFragment().apply {
-                        arguments = Bundle().apply {
-                            putInt("USER_ID", currentUserId)
-                        }
-                    }
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container_view, profileFragment)
-                        .addToBackStack(null)
-                        .commit()
+                // Navigate using global action with arguments
+                val bundle = Bundle().apply {
+                    putInt("userId", currentUserId)
                 }
+                navController.navigate(R.id.action_global_profileFragment, bundle)
             }
             R.id.nav_logout -> {
                 com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.CustomDialog)
@@ -112,6 +125,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
+    override fun onSupportNavigateUp(): Boolean {
+        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+    }
+
     override fun onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START)
@@ -121,22 +138,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     fun logout() {
-        supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container_view, LoginFragment())
-            .commit()
-        setDrawerEnabled(false)
         currentUserId = -1
-    }
-
-    fun setDrawerEnabled(enabled: Boolean) {
-        val lockMode = if (enabled) DrawerLayout.LOCK_MODE_UNLOCKED else DrawerLayout.LOCK_MODE_LOCKED_CLOSED
-        drawerLayout.setDrawerLockMode(lockMode)
-        val toggle = ActionBarDrawerToggle(
-            this, drawerLayout, findViewById(R.id.toolbar),
-            R.string.navigation_drawer_open, R.string.navigation_drawer_close
-        )
-        toggle.isDrawerIndicatorEnabled = enabled
-        toggle.syncState()
+        navController.navigate(R.id.action_global_loginFragment)
     }
 }

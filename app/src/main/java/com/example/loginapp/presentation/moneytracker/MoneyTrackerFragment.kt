@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.Toast
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -46,6 +47,7 @@ class MoneyTrackerFragment : Fragment() {
 
         setupRecyclerView()
         setupFab()
+        setupDatePicker()
         observeTransactions()
 
         // Get userId and category from arguments
@@ -57,6 +59,32 @@ class MoneyTrackerFragment : Fragment() {
         }
 
         viewModel.loadTransactions(userId, category)
+    }
+
+    private fun setupDatePicker() {
+        binding.selectDateButton.setOnClickListener {
+            showDatePickerDialog()
+        }
+
+        binding.clearDateButton.setOnClickListener {
+            viewModel.setDateFilter(null)
+            binding.selectedDateText.text = "Showing all transactions"
+        }
+    }
+
+    private fun showDatePickerDialog() {
+        val datePicker = MaterialDatePicker.Builder.datePicker()
+            .setTitleText("Select Date")
+            .setSelection(viewModel.getSelectedDate() ?: MaterialDatePicker.todayInUtcMilliseconds())
+            .build()
+
+        datePicker.addOnPositiveButtonClickListener { selection ->
+            viewModel.setDateFilter(selection)
+            val dateFormat = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
+            binding.selectedDateText.text = "Showing: ${dateFormat.format(java.util.Date(selection))}"
+        }
+
+        datePicker.show(parentFragmentManager, "DATE_PICKER")
     }
 
     private fun setupRecyclerView() {
@@ -88,11 +116,18 @@ class MoneyTrackerFragment : Fragment() {
 
     private fun setupFab() {
         binding.addTransactionFab.setOnClickListener {
-            showAddTransactionDialog()
+            val selectedDate = viewModel.getSelectedDate()
+            val dialogTitle = if (selectedDate != null) {
+                val dateFormat = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
+                "Add Transaction for ${dateFormat.format(java.util.Date(selectedDate))}"
+            } else {
+                "Add Transaction for Today"
+            }
+            showAddTransactionDialog(dialogTitle)
         }
     }
 
-    private fun showAddTransactionDialog() {
+    private fun showAddTransactionDialog(title: String = "Add Transaction") {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_transaction, null)
         val titleEditText = dialogView.findViewById<EditText>(R.id.titleEditText)
         val amountEditText = dialogView.findViewById<EditText>(R.id.amountEditText)
@@ -144,7 +179,7 @@ class MoneyTrackerFragment : Fragment() {
         }
 
         MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialog)
-            .setTitle("Add Transaction")
+            .setTitle(title)
             .setView(dialogView)
             .setPositiveButton("Add") { dialog, _ ->
                 val title = titleEditText.text.toString()

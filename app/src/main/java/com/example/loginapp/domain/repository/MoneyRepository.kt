@@ -19,4 +19,5 @@ interface MoneyRepository {
     fun getIncomeForDate(userId: Int, category: String, date: String): Flow<Result<Double>>
     fun getExpenseForDate(userId: Int, category: String, date: String): Flow<Result<Double>>
     fun getUserById(userId: Int): Flow<Result<User?>>
+    fun getTransactionsByDate(userId: Int, category: String, date: Long): Flow<Result<List<MoneyTransaction>>>
 }

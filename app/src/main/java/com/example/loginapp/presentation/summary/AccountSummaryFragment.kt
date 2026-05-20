@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.navArgs
 import com.example.loginapp.databinding.FragmentAccountSummaryBinding
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
@@ -14,27 +15,9 @@ class AccountSummaryFragment : Fragment() {
 
     private var _binding: FragmentAccountSummaryBinding? = null
     private val binding get() = _binding!!
+    private val args: AccountSummaryFragmentArgs by navArgs()
 
-    private var userId: Int = -1
 
-    companion object {
-        private const val ARG_USER_ID = "user_id"
-
-        fun newInstance(userId: Int): AccountSummaryFragment {
-            val fragment = AccountSummaryFragment()
-            val args = Bundle()
-            args.putInt(ARG_USER_ID, userId)
-            fragment.arguments = args
-            return fragment
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            userId = it.getInt(ARG_USER_ID)
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,7 +34,7 @@ class AccountSummaryFragment : Fragment() {
     }
 
     private fun setupTabs() {
-        val adapter = SummaryPagerAdapter(this, userId)
+        val adapter = SummaryPagerAdapter(this, args.userId)
         binding.viewPager.adapter = adapter
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
