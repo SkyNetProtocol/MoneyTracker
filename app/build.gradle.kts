@@ -93,6 +93,6 @@ dependencies {
     // Baseline Profiles
     implementation("androidx.profileinstaller:profileinstaller:1.3.1")
 
-//    // LeakCanary
-//    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
+//  // LeakCanary
+//  debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 }
