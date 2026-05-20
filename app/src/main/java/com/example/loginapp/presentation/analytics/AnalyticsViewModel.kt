@@ -32,7 +32,20 @@ class AnalyticsViewModel @Inject constructor(
     private val _incomeVsExpense = MutableStateFlow<Pair<Double, Double>>(0.0 to 0.0)
     val incomeVsExpense: StateFlow<Pair<Double, Double>> = _incomeVsExpense.asStateFlow()
 
+    private val _weeklyBalance = MutableStateFlow<Double>(0.0)
+    val weeklyBalance: StateFlow<Double> = _weeklyBalance.asStateFlow()
+
+    private val _monthlyBalance = MutableStateFlow<Double>(0.0)
+    val monthlyBalance: StateFlow<Double> = _monthlyBalance.asStateFlow()
+
+    private val _weeklyBalanceRange = MutableStateFlow<String>("")
+    val weeklyBalanceRange: StateFlow<String> = _weeklyBalanceRange.asStateFlow()
+
+    private val _monthlyBalanceRange = MutableStateFlow<String>("")
+    val monthlyBalanceRange: StateFlow<String> = _monthlyBalanceRange.asStateFlow()
+
     fun loadAnalytics(userId: Int, category: String = "PERSONAL") {
+        calculatePeriodRanges()
         viewModelScope.launch {
             getAnalyticsUseCase.getHighestIncome(userId, category).collect { result ->
                 if (result is Result.Success) _highestIncome.value = result.data
@@ -67,8 +80,63 @@ class AnalyticsViewModel @Inject constructor(
                     val totalIncome = transactions.filter { it.type == "INCOME" }.sumOf { it.amount }
                     val totalExpense = expenses.sumOf { it.amount }
                     _incomeVsExpense.value = totalIncome to totalExpense
+
+                    // Calculate Weekly Balance
+                    val currentWeekTransactions = transactions.filter { isCurrentWeek(it.timestamp) }
+                    val weeklyIncome = currentWeekTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+                    val weeklyExpense = currentWeekTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+                    _weeklyBalance.value = weeklyIncome - weeklyExpense
+
+                    // Calculate Monthly Balance
+                    val currentMonthTransactions = transactions.filter { isCurrentMonth(it.timestamp) }
+                    val monthlyIncome = currentMonthTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+                    val monthlyExpense = currentMonthTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+                    _monthlyBalance.value = monthlyIncome - monthlyExpense
                 }
             }
         }
+    }
+
+    private fun isCurrentWeek(timestamp: Long): Boolean {
+        val calendar = java.util.Calendar.getInstance()
+        val currentWeek = calendar.get(java.util.Calendar.WEEK_OF_YEAR)
+        val currentYear = calendar.get(java.util.Calendar.YEAR)
+        
+        val targetCalendar = java.util.Calendar.getInstance()
+        targetCalendar.timeInMillis = timestamp
+        
+        return targetCalendar.get(java.util.Calendar.WEEK_OF_YEAR) == currentWeek &&
+                targetCalendar.get(java.util.Calendar.YEAR) == currentYear
+    }
+
+    private fun isCurrentMonth(timestamp: Long): Boolean {
+        val calendar = java.util.Calendar.getInstance()
+        val currentMonth = calendar.get(java.util.Calendar.MONTH)
+        val currentYear = calendar.get(java.util.Calendar.YEAR)
+        
+        val targetCalendar = java.util.Calendar.getInstance()
+        targetCalendar.timeInMillis = timestamp
+        
+        return targetCalendar.get(java.util.Calendar.MONTH) == currentMonth &&
+                targetCalendar.get(java.util.Calendar.YEAR) == currentYear
+    }
+
+    private fun calculatePeriodRanges() {
+        val calendar = java.util.Calendar.getInstance()
+        
+        // Calculate week range (e.g. "May 17 - May 23")
+        val firstDay = calendar.firstDayOfWeek
+        calendar.set(java.util.Calendar.DAY_OF_WEEK, firstDay)
+        val startOfWeek = calendar.time
+        
+        calendar.add(java.util.Calendar.DAY_OF_WEEK, 6)
+        val endOfWeek = calendar.time
+        
+        val weekFormat = java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault())
+        _weeklyBalanceRange.value = "${weekFormat.format(startOfWeek)} - ${weekFormat.format(endOfWeek)}"
+        
+        // Calculate month name (e.g. "May 2026")
+        val monthFormat = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
+        _monthlyBalanceRange.value = monthFormat.format(java.util.Calendar.getInstance().time)
     }
 }

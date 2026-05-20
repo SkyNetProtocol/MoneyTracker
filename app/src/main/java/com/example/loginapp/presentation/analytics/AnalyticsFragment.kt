@@ -56,6 +56,26 @@ class AnalyticsFragment : Fragment() {
                     }
                 }
                 launch {
+                    viewModel.weeklyBalance.collect { balance ->
+                        binding.weeklyBalanceTextView.text = "PHP ${String.format("%.2f", balance)}"
+                    }
+                }
+                launch {
+                    viewModel.weeklyBalanceRange.collect { range ->
+                        binding.weeklyBalanceRangeTextView.text = range
+                    }
+                }
+                launch {
+                    viewModel.monthlyBalance.collect { balance ->
+                        binding.monthlyBalanceTextView.text = "PHP ${String.format("%.2f", balance)}"
+                    }
+                }
+                launch {
+                    viewModel.monthlyBalanceRange.collect { range ->
+                        binding.monthlyBalanceRangeTextView.text = range
+                    }
+                }
+                launch {
                     viewModel.mostFrequentItem.collect { item ->
                         binding.mostFrequentItemTextView.text = item.ifEmpty { "None" }
                     }
