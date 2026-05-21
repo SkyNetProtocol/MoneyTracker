@@ -90,7 +90,7 @@ class MoneyTrackerViewModel @Inject constructor(
         groupedList
     }
 
-    fun addTransaction(title: String, amount: Double, type: String, categoryId: Int? = null) {
+    fun addTransaction(title: String, amount: Double, type: String, categoryId: Int? = null, isPendingLiquidation: Boolean = false) {
         if (currentUserId == -1) {
             _operationState.value = OperationState.Error("User not logged in")
             return
@@ -104,7 +104,8 @@ class MoneyTrackerViewModel @Inject constructor(
                 type = type,
                 category = currentCategory,
                 categoryId = categoryId,
-                timestamp = selectedDate ?: System.currentTimeMillis() // Use selected date if available
+                timestamp = selectedDate ?: System.currentTimeMillis(), // Use selected date if available
+                isPendingLiquidation = isPendingLiquidation
             )
             val result = addTransactionUseCase(transaction)
             _operationState.value = when (result) {
@@ -118,16 +119,7 @@ class MoneyTrackerViewModel @Inject constructor(
     fun deleteTransaction(transaction: MoneyTransaction) {
         viewModelScope.launch {
             _operationState.value = OperationState.Loading
-            val entity = MoneyTransaction(
-                id = transaction.id,
-                userId = transaction.userId,
-                title = transaction.title,
-                amount = transaction.amount,
-                type = transaction.type,
-                category = transaction.category,
-                timestamp = transaction.timestamp
-            )
-            val result = deleteTransactionUseCase(entity)
+            val result = deleteTransactionUseCase(transaction)
             _operationState.value = when (result) {
                 is Result.Success -> OperationState.Success("Transaction deleted successfully")
                 is Result.Error -> OperationState.Error(result.exception.message ?: "Failed to delete transaction")
@@ -139,21 +131,22 @@ class MoneyTrackerViewModel @Inject constructor(
     fun updateTransaction(transaction: MoneyTransaction) {
         viewModelScope.launch {
             _operationState.value = OperationState.Loading
-            val entity = MoneyTransaction(
-                id = transaction.id,
-                userId = transaction.userId,
-                title = transaction.title,
-                amount = transaction.amount,
-                type = transaction.type,
-                category = transaction.category,
-                timestamp = transaction.timestamp
-            )
-            val result = updateTransactionUseCase(entity)
+            val result = updateTransactionUseCase(transaction)
             _operationState.value = when (result) {
                 is Result.Success -> OperationState.Success("Transaction updated successfully")
                 is Result.Error -> OperationState.Error(result.exception.message ?: "Failed to update transaction")
                 is Result.Loading -> OperationState.Loading
             }
+        }
+    }
+
+    fun togglePendingLiquidation(transaction: MoneyTransaction, isChecked: Boolean) {
+        viewModelScope.launch {
+            val updated = transaction.copy(
+                isPendingLiquidation = isChecked,
+                isLiquidated = false
+            )
+            updateTransactionUseCase(updated)
         }
     }
 

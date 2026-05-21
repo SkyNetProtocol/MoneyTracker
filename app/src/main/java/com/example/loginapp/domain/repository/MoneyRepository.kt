@@ -20,4 +20,6 @@ interface MoneyRepository {
     fun getExpenseForDate(userId: Int, category: String, date: String): Flow<Result<Double>>
     fun getUserById(userId: Int): Flow<Result<User?>>
     fun getTransactionsByDate(userId: Int, category: String, date: Long): Flow<Result<List<MoneyTransaction>>>
+    fun getPendingTransactions(userId: Int, category: String): Flow<Result<List<MoneyTransaction>>>
+    fun getPendingTransactionsTotal(userId: Int, category: String): Flow<Result<Double>>
 }

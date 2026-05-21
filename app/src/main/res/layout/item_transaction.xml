@@ -63,6 +63,82 @@
             app:layout_constraintTop_toBottomOf="@+id/titleTextView"
             android:layout_marginTop="2dp"/>
 
+        <!-- Pending Liquidation Badge -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/pendingLiquidationBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="4dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#FFEAEA"
+            app:strokeWidth="0dp"
+            app:layout_constraintStart_toStartOf="@id/titleTextView"
+            app:layout_constraintTop_toBottomOf="@+id/typeTextView"
+            android:layout_marginTop="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pending Liquidation"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/error"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Liquidated Badge -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/liquidatedBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="4dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#E8F5E9"
+            app:strokeWidth="0dp"
+            app:layout_constraintStart_toStartOf="@id/titleTextView"
+            app:layout_constraintTop_toBottomOf="@+id/typeTextView"
+            android:layout_marginTop="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Liquidated"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Badge Barrier -->
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/badgeBarrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="bottom"
+            app:constraint_referenced_ids="pendingLiquidationBadge,liquidatedBadge" />
+
+        <!-- Pending Liquidation Checkbox -->
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/pendingLiquidationCheckBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pending liquidation"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:buttonTint="@color/primary"
+            app:layout_constraintStart_toStartOf="@id/titleTextView"
+            app:layout_constraintTop_toBottomOf="@id/badgeBarrier"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:padding="0dp"/>
+
         <!-- Amount -->
         <TextView
             android:id="@+id/amountTextView"
@@ -83,7 +159,9 @@
             android:orientation="horizontal"
             android:layout_marginTop="8dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/amountTextView">
+            app:layout_constraintTop_toBottomOf="@+id/amountTextView"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="4dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/editButton"

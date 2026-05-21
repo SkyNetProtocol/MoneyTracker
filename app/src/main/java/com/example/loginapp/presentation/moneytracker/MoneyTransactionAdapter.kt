@@ -13,7 +13,8 @@ import com.example.loginapp.domain.model.MoneyTransaction
 
 class MoneyTransactionAdapter(
     private val onEditClick: (MoneyTransaction) -> Unit,
-    private val onDeleteClick: (MoneyTransaction) -> Unit
+    private val onDeleteClick: (MoneyTransaction) -> Unit,
+    private val onPendingClick: (MoneyTransaction, Boolean) -> Unit
 ) : ListAdapter<TransactionListItem, RecyclerView.ViewHolder>(TransactionDiffCallback()) {
 
     companion object {
@@ -47,7 +48,12 @@ class MoneyTransactionAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
             is TransactionListItem.DateHeader -> (holder as DateHeaderViewHolder).bind(item.date)
-            is TransactionListItem.TransactionItem -> (holder as TransactionViewHolder).bind(item.transaction, onEditClick, onDeleteClick)
+            is TransactionListItem.TransactionItem -> (holder as TransactionViewHolder).bind(
+                item.transaction,
+                onEditClick,
+                onDeleteClick,
+                onPendingClick
+            )
         }
     }
 
@@ -65,15 +71,35 @@ class MoneyTransactionAdapter(
         private val typeTextView: TextView = itemView.findViewById(R.id.typeTextView)
         private val editButton: MaterialButton = itemView.findViewById(R.id.editButton)
         private val deleteButton: MaterialButton = itemView.findViewById(R.id.deleteButton)
+        private val pendingLiquidationBadge: View = itemView.findViewById(R.id.pendingLiquidationBadge)
+        private val liquidatedBadge: View = itemView.findViewById(R.id.liquidatedBadge)
+        private val pendingLiquidationCheckBox: com.google.android.material.checkbox.MaterialCheckBox = itemView.findViewById(R.id.pendingLiquidationCheckBox)
 
         fun bind(
             transaction: MoneyTransaction,
             onEditClick: (MoneyTransaction) -> Unit,
-            onDeleteClick: (MoneyTransaction) -> Unit
+            onDeleteClick: (MoneyTransaction) -> Unit,
+            onPendingClick: (MoneyTransaction, Boolean) -> Unit
         ) {
             titleTextView.text = transaction.title
             amountTextView.text = "PHP ${transaction.amount}"
             typeTextView.text = transaction.type
+
+            pendingLiquidationBadge.visibility = if (transaction.isPendingLiquidation) View.VISIBLE else View.GONE
+            liquidatedBadge.visibility = if (transaction.isLiquidated) View.VISIBLE else View.GONE
+
+            if (transaction.type == "EXPENSE" && !transaction.isLiquidated) {
+                pendingLiquidationCheckBox.visibility = View.VISIBLE
+                pendingLiquidationCheckBox.setOnCheckedChangeListener(null)
+                pendingLiquidationCheckBox.isChecked = transaction.isPendingLiquidation
+                pendingLiquidationCheckBox.setOnCheckedChangeListener { _, isChecked ->
+                    onPendingClick(transaction, isChecked)
+                }
+            } else {
+                pendingLiquidationCheckBox.visibility = View.GONE
+                pendingLiquidationCheckBox.setOnCheckedChangeListener(null)
+                pendingLiquidationCheckBox.isChecked = false
+            }
 
             editButton.setOnClickListener {
                 onEditClick(transaction)

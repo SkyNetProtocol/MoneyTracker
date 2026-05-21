@@ -12,7 +12,9 @@ fun MoneyTransactionEntity.toDomain(): MoneyTransaction {
         type = type,
         category = category,
         categoryId = categoryId,
-        timestamp = timestamp
+        timestamp = timestamp,
+        isPendingLiquidation = isPendingLiquidation,
+        isLiquidated = isLiquidated
     )
 }
 
@@ -25,6 +27,8 @@ fun MoneyTransaction.toEntity(): MoneyTransactionEntity {
         type = type,
         category = category,
         categoryId = categoryId,
-        timestamp = timestamp
+        timestamp = timestamp,
+        isPendingLiquidation = isPendingLiquidation,
+        isLiquidated = isLiquidated
     )
 }

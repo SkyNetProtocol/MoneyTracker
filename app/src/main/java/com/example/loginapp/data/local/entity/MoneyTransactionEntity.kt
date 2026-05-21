@@ -29,5 +29,7 @@ data class MoneyTransactionEntity(
     val type: String, // "INCOME" or "EXPENSE"
     val category: String = "PERSONAL", // "PERSONAL" or "COMPANY"
     val categoryId: Int? = null, // Foreign key to CategoryEntity
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isPendingLiquidation: Boolean = false,
+    val isLiquidated: Boolean = false
 )

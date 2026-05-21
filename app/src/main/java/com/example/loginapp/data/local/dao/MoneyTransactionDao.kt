@@ -49,6 +49,12 @@ interface MoneyTransactionDao {
 
     @Query("SELECT * FROM money_transactions WHERE userId = :userId AND category = :category AND timestamp >= :startOfDay AND timestamp < :endOfDay ORDER BY timestamp DESC")
     fun getTransactionsByDateRange(userId: Int, category: String, startOfDay: Long, endOfDay: Long): Flow<List<MoneyTransactionEntity>>
+
+    @Query("SELECT * FROM money_transactions WHERE userId = :userId AND category = :category AND isPendingLiquidation = 1 ORDER BY timestamp DESC")
+    fun getPendingLiquidationTransactions(userId: Int, category: String): Flow<List<MoneyTransactionEntity>>
+
+    @Query("SELECT SUM(amount) FROM money_transactions WHERE userId = :userId AND category = :category AND isPendingLiquidation = 1")
+    fun getPendingLiquidationTotal(userId: Int, category: String): Flow<Double?>
 }
 
 data class ItemCount(val title: String, val count: Int)

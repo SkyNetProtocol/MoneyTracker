@@ -134,4 +134,18 @@ class MoneyRepositoryImpl @Inject constructor(
             .catch { e -> emit(Result.Error(e)) }
             .flowOn(ioDispatcher)
     }
+
+    override fun getPendingTransactions(userId: Int, category: String): Flow<Result<List<MoneyTransaction>>> =
+        moneyTransactionDao.getPendingLiquidationTransactions(userId, category)
+            .map { entities ->
+                Result.Success(entities.map { it.toDomain() }) as Result<List<MoneyTransaction>>
+            }
+            .catch { e -> emit(Result.Error(e)) }
+            .flowOn(ioDispatcher)
+
+    override fun getPendingTransactionsTotal(userId: Int, category: String): Flow<Result<Double>> =
+        moneyTransactionDao.getPendingLiquidationTotal(userId, category)
+            .map { Result.Success(it ?: 0.0) as Result<Double> }
+            .catch { e -> emit(Result.Error(e)) }
+            .flowOn(ioDispatcher)
 }

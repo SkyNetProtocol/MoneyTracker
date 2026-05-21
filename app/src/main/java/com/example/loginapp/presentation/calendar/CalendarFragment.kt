@@ -63,6 +63,9 @@ class CalendarFragment : Fragment() {
             },
             onDeleteClick = {
                 Toast.makeText(requireContext(), "Manage modifying operations (edit/delete) in the Money Tracker tab", Toast.LENGTH_SHORT).show()
+            },
+            onPendingClick = { transaction, isChecked ->
+                viewModel.togglePendingLiquidation(transaction, isChecked)
             }
         )
         binding.transactionsRecyclerView.adapter = adapter

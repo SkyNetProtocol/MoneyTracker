@@ -94,6 +94,9 @@ class MoneyTrackerFragment : Fragment() {
             },
             onDeleteClick = { transaction ->
                 showDeleteConfirmationDialog(transaction)
+            },
+            onPendingClick = { transaction, isChecked ->
+                viewModel.togglePendingLiquidation(transaction, isChecked)
             }
         )
         binding.transactionsRecyclerView.adapter = adapter
@@ -189,6 +192,7 @@ class MoneyTrackerFragment : Fragment() {
                     R.id.expenseRadioButton -> "EXPENSE"
                     else -> "INCOME"
                 }
+                val isPendingLiquidation = false
 
                 if (title.isNotBlank() && amountStr.isNotBlank()) {
                     val amount = amountStr.toDoubleOrNull()
@@ -205,7 +209,7 @@ class MoneyTrackerFragment : Fragment() {
                         } else null
                         
                         dialog.dismiss() // Dismiss BEFORE operation
-                        viewModel.addTransaction(title, amount, type, selectedCategoryId)
+                        viewModel.addTransaction(title, amount, type, selectedCategoryId, isPendingLiquidation)
                     } else {
                         Toast.makeText(requireContext(), "Invalid amount", Toast.LENGTH_SHORT).show()
                     }
@@ -297,8 +301,12 @@ class MoneyTrackerFragment : Fragment() {
         amountEditText.setText(transaction.amount.toString())
         
         when (transaction.type) {
-            "INCOME" -> typeRadioGroup.check(R.id.incomeRadioButton)
-            "EXPENSE" -> typeRadioGroup.check(R.id.expenseRadioButton)
+            "INCOME" -> {
+                typeRadioGroup.check(R.id.incomeRadioButton)
+            }
+            "EXPENSE" -> {
+                typeRadioGroup.check(R.id.expenseRadioButton)
+            }
         }
 
         val categoryAdapter = ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item)
@@ -355,9 +363,21 @@ class MoneyTrackerFragment : Fragment() {
                     R.id.expenseRadioButton -> "EXPENSE"
                     else -> transaction.type
                 }
+                val isPendingLiquidation = if (type == "EXPENSE") transaction.isPendingLiquidation else false
+                val isLiquidated = if (type == "EXPENSE") transaction.isLiquidated else false
 
                 val selectedCategoryText = categorySpinner.selectedItem?.toString() ?: ""
                 val categoryName = selectedCategoryText.substringAfter(" ").trim()
+
+                val selectedPosition = categorySpinner.selectedItemPosition
+                val categories = if (type == "INCOME") {
+                    categoryViewModel.incomeCategories.value
+                } else {
+                    categoryViewModel.expenseCategories.value
+                }
+                val selectedCategoryId = if (selectedPosition >= 0 && selectedPosition < categories.size) {
+                    categories[selectedPosition].id
+                } else transaction.categoryId
 
                 if (title.isNotEmpty() && amountStr.isNotEmpty()) {
                     val amount = amountStr.toDoubleOrNull() ?: 0.0
@@ -365,7 +385,10 @@ class MoneyTrackerFragment : Fragment() {
                         title = title,
                         amount = amount,
                         type = type,
-                        category = categoryName
+                        category = categoryName,
+                        categoryId = selectedCategoryId,
+                        isPendingLiquidation = isPendingLiquidation,
+                        isLiquidated = isLiquidated
                     )
                     dialog.dismiss() // Dismiss BEFORE operation
                     viewModel.updateTransaction(updatedTransaction)

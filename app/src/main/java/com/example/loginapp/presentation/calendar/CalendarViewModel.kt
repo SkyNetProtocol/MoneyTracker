@@ -12,9 +12,12 @@ import kotlinx.coroutines.launch
 import com.example.loginapp.domain.model.MoneyTransaction
 import javax.inject.Inject
 
+import com.example.loginapp.domain.usecase.UpdateTransactionUseCase
+
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    private val getTransactionsByDateUseCase: GetTransactionsByDateUseCase
+    private val getTransactionsByDateUseCase: GetTransactionsByDateUseCase,
+    private val updateTransactionUseCase: UpdateTransactionUseCase
 ) : ViewModel() {
 
     private val _selectedDate = MutableStateFlow(System.currentTimeMillis())
@@ -67,4 +70,15 @@ class CalendarViewModel @Inject constructor(
             }
         }
     }
+
+    fun togglePendingLiquidation(transaction: MoneyTransaction, isChecked: Boolean) {
+        viewModelScope.launch {
+            val updated = transaction.copy(
+                isPendingLiquidation = isChecked,
+                isLiquidated = false
+            )
+            updateTransactionUseCase(updated)
+        }
+    }
 }
+

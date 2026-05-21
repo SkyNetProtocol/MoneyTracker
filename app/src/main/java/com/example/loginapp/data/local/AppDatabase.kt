@@ -11,7 +11,7 @@ import com.example.loginapp.data.local.entity.MoneyTransactionEntity
 import com.example.loginapp.data.local.dao.CategoryDao
 import com.example.loginapp.data.local.entity.CategoryEntity
 
-@Database(entities = [UserEntity::class, MoneyTransactionEntity::class, CategoryEntity::class], version = 4, exportSchema = false)
+@Database(entities = [UserEntity::class, MoneyTransactionEntity::class, CategoryEntity::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun moneyTransactionDao(): MoneyTransactionDao

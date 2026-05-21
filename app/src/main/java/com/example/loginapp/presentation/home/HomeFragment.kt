@@ -48,6 +48,7 @@ class HomeFragment : Fragment() {
                 1 -> "Analytics"
                 2 -> "Graph"
                 3 -> "Calendar"
+                4 -> "Liquidation"
                 else -> "Tab ${position + 1}"
             }
         }.attach()
@@ -89,7 +90,7 @@ class HomeFragment : Fragment() {
 
 
     private inner class HomePagerAdapter(fragment: Fragment, private val userId: Int) : FragmentStateAdapter(fragment) {
-        override fun getItemCount(): Int = 4
+        override fun getItemCount(): Int = 5
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
@@ -119,6 +120,14 @@ class HomeFragment : Fragment() {
                 }
                 3 -> {
                     com.example.loginapp.presentation.calendar.CalendarFragment().apply {
+                        arguments = Bundle().apply {
+                            putInt("USER_ID", userId)
+                            putString("CATEGORY", currentCategory)
+                        }
+                    }
+                }
+                4 -> {
+                    com.example.loginapp.presentation.liquidation.LiquidationFragment().apply {
                         arguments = Bundle().apply {
                             putInt("USER_ID", userId)
                             putString("CATEGORY", currentCategory)
